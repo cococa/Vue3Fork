@@ -35,7 +35,7 @@ type RefBase<T> = {
   dep?: Dep
   value: T
 }
-
+// 收集依赖
 export function trackRefValue(ref: RefBase<any>) {
   if (shouldTrack && activeEffect) {
     ref = toRaw(ref)
@@ -50,7 +50,7 @@ export function trackRefValue(ref: RefBase<any>) {
     }
   }
 }
-
+// 触发依赖
 export function triggerRefValue(ref: RefBase<any>, newVal?: any) {
   ref = toRaw(ref)
   if (ref.dep) {
@@ -78,6 +78,7 @@ export function ref<T extends object>(
 export function ref<T>(value: T): Ref<UnwrapRef<T>>
 export function ref<T = any>(): Ref<T | undefined>
 export function ref(value?: unknown) {
+  // 创建 RefImpl
   return createRef(value, false)
 }
 
@@ -95,6 +96,7 @@ export function shallowRef(value?: unknown) {
 }
 
 function createRef(rawValue: unknown, shallow: boolean) {
+  // 如果本身就是 ref , 则直接返回
   if (isRef(rawValue)) {
     return rawValue
   }
@@ -108,12 +110,19 @@ class RefImpl<T> {
   public dep?: Dep = undefined
   public readonly __v_isRef = true
 
+  /**
+   * 
+   * @param value 
+   * @param __v_isShallow 是否是浅层 ref
+   */
   constructor(value: T, public readonly __v_isShallow: boolean) {
+    // 浅层 ref 则，直接赋值
     this._rawValue = __v_isShallow ? value : toRaw(value)
     this._value = __v_isShallow ? value : toReactive(value)
   }
 
   get value() {
+    // 收集依赖
     trackRefValue(this)
     return this._value
   }
@@ -125,6 +134,7 @@ class RefImpl<T> {
     if (hasChanged(newVal, this._rawValue)) {
       this._rawValue = newVal
       this._value = useDirectValue ? newVal : toReactive(newVal)
+      
       triggerRefValue(this, newVal)
     }
   }
