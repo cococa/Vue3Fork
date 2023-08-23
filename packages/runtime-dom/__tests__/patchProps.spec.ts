@@ -1,4 +1,3 @@
-import { vi } from 'vitest'
 import { patchProp } from '../src/patchProp'
 import { render, h } from '../src'
 
@@ -24,6 +23,14 @@ describe('runtime-dom: props patching', () => {
     patchProp(el, 'value', null, obj)
     expect(el.value).toBe(obj.toString())
     expect((el as any)._value).toBe(obj)
+
+    const option = document.createElement('option')
+    patchProp(option, 'textContent', null, 'foo')
+    expect(option.value).toBe('foo')
+    expect(option.getAttribute('value')).toBe(null)
+    patchProp(option, 'value', null, 'foo')
+    expect(option.value).toBe('foo')
+    expect(option.getAttribute('value')).toBe('foo')
   })
 
   test('value for custom elements', () => {
@@ -45,8 +52,8 @@ describe('runtime-dom: props patching', () => {
 
       public setterCalled: number = 0
     }
-    window.customElements.define('test-element', TestElement)
-    const el = document.createElement('test-element') as TestElement
+    window.customElements.define('patch-props-test-element', TestElement)
+    const el = document.createElement('patch-props-test-element') as TestElement
     patchProp(el, 'value', null, 'foo')
     expect(el.value).toBe('foo')
     expect(el.setterCalled).toBe(1)

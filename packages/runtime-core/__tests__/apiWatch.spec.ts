@@ -1,4 +1,3 @@
-import { vi } from 'vitest'
 import {
   watch,
   watchEffect,
@@ -30,7 +29,8 @@ import {
   triggerRef,
   shallowRef,
   Ref,
-  effectScope
+  effectScope,
+  toRef
 } from '@vue/reactivity'
 
 // reference: https://vue-composition-api-rfc.netlify.com/api.html#watch
@@ -926,6 +926,25 @@ describe('api: watch', () => {
     expect(spy).toHaveBeenCalledTimes(1)
   })
 
+  test('should force trigger on triggerRef with toRef from reactive', async () => {
+    const foo = reactive({ bar: 1 })
+    const bar = toRef(foo, 'bar')
+    const spy = vi.fn()
+
+    watchEffect(() => {
+      bar.value
+      spy()
+    })
+
+    expect(spy).toHaveBeenCalledTimes(1)
+
+    triggerRef(bar)
+
+    await nextTick()
+    // should trigger now
+    expect(spy).toHaveBeenCalledTimes(2)
+  })
+
   // #2125
   test('watchEffect should not recursively trigger itself', async () => {
     const spy = vi.fn()
@@ -981,7 +1000,7 @@ describe('api: watch', () => {
       },
       mounted() {
         // this call runs while Comp is currentInstance, but
-        // the effect for this `$watch` should nontheless be registered with Child
+        // the effect for this `$watch` should nonetheless be registered with Child
         this.comp!.$watch(
           () => this.show,
           () => void 0
@@ -1152,7 +1171,7 @@ describe('api: watch', () => {
     expect(instance!.scope.effects.length).toBe(1)
   })
 
-  test('watchEffect should keep running if created in a detatched scope', async () => {
+  test('watchEffect should keep running if created in a detached scope', async () => {
     const trigger = ref(0)
     let countWE = 0
     let countW = 0
