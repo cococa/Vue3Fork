@@ -1,0 +1,141 @@
+<script src="../../dist/vue.global.js"></script>
+
+<div id="editor" style="display: flex; flex-direction: column">
+  <p>使用refObj{{ refObj }}</p>
+  <button @click="changeRefObj1">changeRefObj { refObj.value = {name: "22222"} }</button>
+  <button @click="changeRefObj2">changeRefObj {  refObj.value.name = "3333" }</button>
+
+  <p>使用ref 操作基础类型{{ refNumber }}</p>
+  <button @click="changeRefNumber">changeRefNumber { refObj.value = {name: "22222"} }</button>
+
+
+  <p>使用ref{{ count }}</p>
+  <button @click="refShallowPP">refShallowPP</button>
+  <button @click="refDeepPP">refDeepPP</button>
+
+  <p>使用shallowRef{{ count1 }}</p>
+  <button @click="srefShallowPP">srefShallowPP</button>
+  <button @click="srefDeepPP">srefDeepPP</button>
+</div>
+
+<script>
+  const { createApp, ref, shallowRef , toRaw , reactive, version, watch } = Vue
+
+  Vue.createApp({//
+    setup() {
+      // version 3.3.4
+      console.log(version)
+      
+      // const a = {name: "123"}
+      // const r1 = reactive(a)
+      // console.log(toRaw(r1) === a)
+
+      const refObj = ref({name: "123"})
+
+      const changeRefObj1 = () => {
+        refObj.value = {name: "22222"+ new Date().getTime()}
+      }
+      const changeRefObj2 = () => {
+        refObj.value.name = "3333"+ new Date().getTime()
+      }
+
+      watch(refObj, (newVal, oldVal) => {
+        console.log('watch refObj', newVal, oldVal)
+      })
+
+      watch(refObj.value, (newVal, oldVal) => {
+        console.log('watch refObj.value', newVal, oldVal)
+      })
+
+
+      // const refNumber = ref(1)
+
+      // const changeRefNumber = () => {
+      //   refNumber.value = new Date().getTime()
+      // }
+
+
+
+
+      // const count = ref([])
+      // const refShallowPP = () => {
+      //   count.value = [1, 2, 3]
+      // }
+      // const refDeepPP = () => {
+      //   count.value[0] += 1
+      // }
+
+      // const count1 = shallowRef([])
+      // const srefShallowPP = () => {
+      //   count1.value = [1, 2, 3]
+      // }
+      // const srefDeepPP = () => {
+      //   count1.value[0] += 1
+      // }
+
+      return {
+        // count,count1,
+        // refShallowPP,
+        // refDeepPP,
+        // srefShallowPP,
+        // srefDeepPP,
+        // refObj,
+        // changeRefObj1,
+        // changeRefObj2,
+        // refNumber,
+        // changeRefNumber
+
+        refObj,
+        changeRefObj1,
+        changeRefObj2
+
+      }
+    },
+    data: () => ({}),
+    computed: {},
+    methods: {
+      test() {
+        console.log(123)
+      }
+    }
+  }).mount('#editor')
+</script>
+
+<style>
+  html,
+  body,
+  #editor {
+    margin: 0;
+    height: 100%;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    color: #333;
+  }
+
+  textarea,
+  #editor div {
+    display: inline-block;
+    overflow: auto;
+    width: 50%;
+    height: 100%;
+    vertical-align: top;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    padding: 0 20px;
+  }
+
+  textarea {
+    border: none;
+    border-right: 1px solid #ccc;
+    resize: none;
+    outline: none;
+    background-color: #f6f6f6;
+    font-size: 14px;
+    font-family: 'Monaco', courier, monospace;
+    padding: 20px;
+  }
+
+  code {
+    color: #f66;
+  }
+</style>

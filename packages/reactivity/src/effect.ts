@@ -15,16 +15,31 @@ import { ComputedRefImpl } from './computed'
 // Conceptually, it's easier to think of a dependency as a Dep class
 // which maintains a Set of subscribers, but we simply store them as
 // raw Sets to reduce memory overhead.
+
+/**
+ * 本章的知识基本可以参考  精读 Vuejs 设计与实现第 4 章（响应式系统） https://juejin.cn/post/7264179649323008055
+ *
+ *
+ */
+
+/**
+ *
+ * targetMap 是一个 WeakMap，它的 key 是 target(监听的对象，比如ref或者reactive) ，value 是一个 KeyToDepMap
+ * KeyToDepMap 是一个 Map，它的 key 是 target 的属性，value 是一个 Dep ， Dep 包含 wasTracked 和 newTracked 两个属性，还有一个set集合，存放 effect
+ *
+ *
+ */
 type KeyToDepMap = Map<any, Dep>
 const targetMap = new WeakMap<any, KeyToDepMap>()
 
 // The number of effects currently being tracked recursively.
+// 当前递归跟踪的效果数量。
 let effectTrackDepth = 0
 
 export let trackOpBit = 1
 
 /**
- * The bitwise track markers support at most 30 levels of recursion.
+ * The bitwise track markers support at most 30 levels of recursion. 按位跟踪标记最多支持30个递归级别。
  * This value is chosen to enable modern JS engines to use a SMI on all platforms.
  * When recursion depth is greater, fall back to using a full cleanup.
  */
@@ -155,7 +170,9 @@ export interface DebuggerOptions {
 }
 
 export interface ReactiveEffectOptions extends DebuggerOptions {
+  //是否延迟触发 effect
   lazy?: boolean
+  //调度函数
   scheduler?: EffectScheduler
   scope?: EffectScope
   allowRecurse?: boolean
@@ -168,10 +185,11 @@ export interface ReactiveEffectRunner<T = any> {
 }
 
 /**
- * Registers the given function to track reactive updates.
+ * Registers the given function to track reactive updates. 注册给定函数以跟踪响应式更新。
  *
  * The given function will be run once immediately. Every time any reactive
  * property that's accessed within it gets updated, the function will run again.
+ * 给定的函数将立即运行一次。每当在其中访问的任何响应性属性被更新时，该函数将再次运行。
  *
  * @param fn - The function that will track reactive updates.
  * @param options - Allows to control the effect's behaviour.
@@ -244,7 +262,16 @@ export function resetTracking() {
  * @param type - Defines the type of access to the reactive property.
  * @param key - Identifier of the reactive property to track.
  */
+
+/**
+ * 本质就是将对应的依赖收集到 targetMap 中
+ * @param target 原始对象
+ * @param type   收集的类型
+ * @param key    对象的key
+ *
+ */
 export function track(target: object, type: TrackOpTypes, key: unknown) {
+  // 是否要收集依赖
   if (shouldTrack && activeEffect) {
     let depsMap = targetMap.get(target)
     if (!depsMap) {
@@ -298,10 +325,15 @@ export function trackEffects(
  * Finds all deps associated with the target (or a specific property) and
  * triggers the effects stored within.
  *
+ * 查找与目标(或特定属性)关联的所有deps，并触发其中存储的副作用。
+ *
+ * 这个方法的调用者为 packages/reactivity/src/baseHandlers.ts 和 packages/reactivity/src/collectionHandlers.ts
+ *
  * @param target - The reactive object.
  * @param type - Defines the type of the operation that needs to trigger effects.
  * @param key - Can be used to target a specific reactive property in the target object.
  */
+
 export function trigger(
   target: object,
   type: TriggerOpTypes,
@@ -396,11 +428,14 @@ export function triggerEffects(
 ) {
   // spread into array for stabilization
   const effects = isArray(dep) ? dep : [...dep]
+
+  // 首先执行 computed 的 effect
   for (const effect of effects) {
     if (effect.computed) {
       triggerEffect(effect, debuggerEventExtraInfo)
     }
   }
+  // 然后执行普通的 effect
   for (const effect of effects) {
     if (!effect.computed) {
       triggerEffect(effect, debuggerEventExtraInfo)

@@ -167,6 +167,7 @@ class MutableReactiveHandler extends BaseReactiveHandler {
     value: unknown,
     receiver: object
   ): boolean {
+    // debugger
     let oldValue = (target as any)[key]
     if (isReadonly(oldValue) && isRef(oldValue) && !isRef(value)) {
       return false

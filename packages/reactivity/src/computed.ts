@@ -101,6 +101,14 @@ export class ComputedRefImpl<T> {
  * @param debugOptions - For debugging. See {@link https://vuejs.org/guide/extras/reactivity-in-depth.html#computed-debugging}.
  * @see {@link https://vuejs.org/api/reactivity-core.html#computed}
  */
+
+/**
+ * computed 函数的重载
+ * @param getter 只读的 getter 函数
+ * @param options 读写的 getter 和 setter 函数
+ * @getterOrOptions 只读的 getter 函数或者读写的 getter 和 setter 函数
+ * @param debugOptions 用来调试 computed , onTrack 和 onTrigger 两个函数
+ */
 export function computed<T>(
   getter: ComputedGetter<T>,
   debugOptions?: DebuggerOptions

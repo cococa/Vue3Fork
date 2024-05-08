@@ -18,9 +18,28 @@ import {
 import type { ShallowReactiveMarker } from './reactive'
 import { CollectionTypes } from './collectionHandlers'
 import { createDep, Dep } from './dep'
+// import { debug } from 'console'
 
 declare const RefSymbol: unique symbol
 export declare const RawSymbol: unique symbol
+
+/**
+ * 测试：
+ * 使用 /example/reactivity/ref.html  测试本
+ *
+ *
+ * 总结：
+ * 1. ref 是一个函数，有多个重载方法，接收一个参数(赋值给value 属性)，返回一个 RefImpl 对象
+ * 2. 在ref set/get value 的时候进行依赖收集和触发依赖
+ * 3. shallowRef 简介：浅层式 API 创建的状态只在其顶层是响应式的，对所有深层的对象不会做任何处理。
+ *
+ * 4. 如果是Shallow Ref( 调用 shallowRef 方法创建)， _rawValue 和 _value 是一样的
+ * 5. 如果是非Shallow Ref( 调用 ref 方法创建)， 则 _rawValue （原始数据）和 _value (会用reactive 包裹) 是不一样的, 【这里要注意，不管是基础类型，对象，或数组，都会被 reactive 包裹】
+ *
+ * todo:
+ * 1. 暂时还没弄明白，为什么 shallowRef 可以让深层次的数据不会被更新, 暂时只知道trackEffects 没有收集
+ *
+ */
 
 export interface Ref<T = any> {
   value: T
@@ -33,10 +52,14 @@ export interface Ref<T = any> {
 }
 
 type RefBase<T> = {
+  // q:  dep 是什么？
   dep?: Dep
   value: T
 }
-// 收集依赖
+/**
+ * 收集依赖
+ * @param ref
+ */
 export function trackRefValue(ref: RefBase<any>) {
   if (shouldTrack && activeEffect) {
     ref = toRaw(ref)
@@ -51,7 +74,11 @@ export function trackRefValue(ref: RefBase<any>) {
     }
   }
 }
-// 触发依赖
+/**
+ * 触发依赖
+ * @param ref
+ * @param newVal
+ */
 export function triggerRefValue(ref: RefBase<any>, newVal?: any) {
   ref = toRaw(ref)
   const dep = ref.dep
@@ -92,6 +119,7 @@ export function ref<T>(value: T): Ref<UnwrapRef<T>>
 export function ref<T = any>(): Ref<T | undefined>
 export function ref(value?: unknown) {
   // 创建 RefImpl
+  // debugger;
   return createRef(value, false)
 }
 
@@ -138,33 +166,41 @@ class RefImpl<T> {
   private _rawValue: T
 
   public dep?: Dep = undefined
-  public readonly __v_isRef = true
+  public readonly __v_isRef = true // 该属性用来判断是否是 ref
 
   /**
-   * 
-   * @param value 
-   * @param __v_isShallow 是否是浅层 ref
+   *
+   * @param value
+   * @param __v_isShallow 是否是浅层 ref  就是 shallowRef 和ref 的区别
    */
-  constructor(value: T, public readonly __v_isShallow: boolean) {
+  constructor(
+    value: T,
+    public readonly __v_isShallow: boolean
+  ) {
     // 浅层 ref 则，直接赋值
     this._rawValue = __v_isShallow ? value : toRaw(value)
     this._value = __v_isShallow ? value : toReactive(value)
   }
 
+  // getters/setters 方法是 ts 的语法糖，对 _value 属性进行读取和设置
+  // 这里还没明白为什么 shallowRef 是怎么让深层次的数据不会被更新的
   get value() {
+    // debugger
     // 收集依赖
     trackRefValue(this)
     return this._value
   }
 
   set value(newVal) {
+    // debugger
     const useDirectValue =
       this.__v_isShallow || isShallow(newVal) || isReadonly(newVal)
     newVal = useDirectValue ? newVal : toRaw(newVal)
+    //对比数据数据是否有变化
     if (hasChanged(newVal, this._rawValue)) {
       this._rawValue = newVal
       this._value = useDirectValue ? newVal : toReactive(newVal)
-      
+      //触发依赖
       triggerRefValue(this, newVal)
     }
   }

@@ -2,9 +2,9 @@
 // debugger events
 
 export const enum TrackOpTypes {
-  GET = 'get',
-  HAS = 'has',
-  ITERATE = 'iterate'
+  GET = 'get', // target.key
+  HAS = 'has', // key in target
+  ITERATE = 'iterate' // 遍历
 }
 
 export const enum TriggerOpTypes {
